@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
-from app.main import get_session
+from app.core.session import get_session
 from app.users.models.user_model import User
 from app.users.schemas.user_schemas import EditorDelete, UserCreate, UserResponse
 from app.users.services.user_services import handle_editor_create, handle_editor_delete, handle_editor_read, handle_user_create, handle_user_delete

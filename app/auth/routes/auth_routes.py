@@ -6,7 +6,7 @@ from sqlmodel import Session
 
 from app.auth.schemas.token import Token
 from app.auth.services.auth_services import authenticate_user, create_access_token
-from app.main import get_session
+from app.core.session import get_session
 
 
 router = APIRouter(prefix='/auth', tags=['Auth'])

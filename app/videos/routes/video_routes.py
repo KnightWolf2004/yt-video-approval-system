@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlmodel import Session
 
-from app.main import get_session
+from app.core.session import get_session
 from app.users.models.user_model import User
 from app.utils.shared_utils import serialize_list
 from app.videos.schemas.video_schemas import VideoCreate, VideoDelete, VideoResponse, VideoUpdateStatus

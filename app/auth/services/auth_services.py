@@ -9,7 +9,7 @@ from jwt.exceptions import InvalidTokenError
 
 from app.auth.schemas.token import TokenData
 from app.auth.utils.auth_utils import verify_password
-from app.main import get_session
+from app.core.session import get_session
 from app.users.models.user_model import User
 from app.users.utils.user_utils import get_user_by_username
 
