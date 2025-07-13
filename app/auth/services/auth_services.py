@@ -6,10 +6,13 @@ from fastapi import Depends, HTTPException, status
 import os
 from datetime import timedelta, datetime, timezone
 from jwt.exceptions import InvalidTokenError
-from app.auth.models.token import TokenData
+
+from app.auth.schemas.token import TokenData
 from app.auth.utils.auth_utils import verify_password
 from app.main import get_session
-from app.models import Status, User
+from app.users.models.user_model import User
+from app.users.utils.user_utils import get_user_by_username
+
 
 SECRET_KEY = os.getenv("SECRET_KEY")
 ALGORITHM = "HS256"
@@ -17,8 +20,9 @@ ALGORITHM = "HS256"
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
 
 def authenticate_user(username: str, password: str, session: Session = Depends(get_session)):
-    user_statement = select(User).where(User.username == username)
-    user = session.exec(user_statement).first()
+    # user_statement = select(User).where(User.username == username)
+    # user = session.exec(user_statement).first()
+    user =  get_user_by_username(session, username)
     if user is None:
         return False
     if not verify_password(password, user.password):
@@ -36,7 +40,7 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None):
     encoded_jwt = jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
+def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], session: Session = Depends(get_session)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
@@ -56,5 +60,5 @@ async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)], sessio
         raise credentials_exception
     return user
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
+def get_current_active_user(current_user: User = Depends(get_current_user))->User:
     return current_user
