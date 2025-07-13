@@ -3,7 +3,9 @@ from fastapi import FastAPI
 from contextlib import asynccontextmanager
 from dotenv import load_dotenv
 from .database import engine, create_db_and_tables
-from .models import Role, Status, User, Video
+from app.auth.routes import auth_routes
+from app.users.routes import user_routes
+from app.videos.routes import video_routes
 
 load_dotenv()
 
@@ -17,3 +19,7 @@ def get_session():
         yield session
 
 app = FastAPI(lifespan=lifespan)
+
+app.include_router(auth_routes.router)
+app.include_router(user_routes.router)
+app.include_router(video_routes.router)
