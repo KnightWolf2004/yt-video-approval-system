@@ -4,6 +4,7 @@ from sqlalchemy import Enum as SQLEnum
 from typing import TYPE_CHECKING
 from sqlalchemy.orm import declared_attr
 from app.videos.models.video_enums import Status
+from app.users.models.user_model import User
 
 
 if TYPE_CHECKING:
@@ -21,5 +22,5 @@ class Video(SQLModel, table=True):
     uploaded_by: int = Field(foreign_key="users.id")
     reviewed_by: int = Field(foreign_key="users.id")
 
-    uploader: User = Relationship(back_populates="uploaded")
-    reviewer: User = Relationship(back_populates="reviewer")
+    uploader: User = Relationship(back_populates="uploaded", sa_relationship_kwargs={"foreign_keys": "[Video.uploaded_by]"})
+    reviewer: User = Relationship(back_populates="reviewed", sa_relationship_kwargs={"foreign_keys": "[Video.reviewed_by]"})

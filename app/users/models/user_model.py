@@ -23,6 +23,6 @@ class User(SQLModel, table=True):
     admin_id: int | None = Field(default=None, foreign_key="users.id")
 
     editors: list["User"] = Relationship(back_populates="admin", cascade_delete=True)
-    admin: Optional["User"] = Relationship(back_populates="editors")
-    uploaded: list["Video"] = Relationship(back_populates="uploader")
-    reviewed: list["Video"] = Relationship(back_populates="reviewer")
+    admin: Optional["User"] = Relationship(back_populates="editors", sa_relationship_kwargs={"remote_side": "User.id"})
+    uploaded: list["Video"] = Relationship(back_populates="uploader", sa_relationship_kwargs={"foreign_keys": "[Video.uploaded_by]"})
+    reviewed: list["Video"] = Relationship(back_populates="reviewer", sa_relationship_kwargs={"foreign_keys": "[Video.reviewed_by]"})
