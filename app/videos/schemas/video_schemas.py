@@ -1,3 +1,4 @@
+from pydantic import field_serializer
 from sqlmodel import SQLModel
 
 from app.videos.models.video_enums import Status
@@ -14,6 +15,10 @@ class VideoResponse(SQLModel):
     status: Status
     uploader: str
     reviewer: str
+
+    @field_serializer('status')
+    def serialize_status(self, status: Status):
+        return status.name
 
 class VideoDelete(SQLModel):
     id: int
