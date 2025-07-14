@@ -9,7 +9,7 @@ from app.users.schemas.user_schemas import EditorDelete, UserCreate
 
 
 def handle_user_create(session: Session, user: UserCreate):
-    password = get_password_hash(user.password)                                           
+    password = get_password_hash(user.password)
     extra_data = {"password": password, "role": Role.Admin}
     user_db = User.model_validate(user, update=extra_data)
     session.add(user_db)
@@ -23,7 +23,8 @@ def handle_user_create(session: Session, user: UserCreate):
     
 def handle_editor_create(session: Session, user: UserCreate, admin: User):
     admin_id = admin.id
-    extra_data = {"role": Role.Editor, "admin_id": admin_id}
+    password = get_password_hash(user.password)
+    extra_data = {"role": Role.Editor, "admin_id": admin_id, "password": password}
     db_user = User.model_validate(user, update=extra_data)
     db_user.admin = admin
     session.add(db_user)
