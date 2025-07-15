@@ -1,6 +1,9 @@
 from sqlmodel import SQLModel, create_engine
+import os
 
-postgres_url = "postgresql://postgres:adm1n@localhost:5432/yt_app"
+
+postgres_url = os.getenv("DATABASE_URL")
+assert postgres_url is not None
 engine = create_engine(postgres_url, echo=True)
 
 def create_db_and_tables():
