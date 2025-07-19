@@ -13,7 +13,10 @@ from app.users.models.user_enums import Role
 from app.users.models.user_model import User
 from app.videos.models.video_model import Video
 from app.videos.schemas.video_schemas import VideoCreate, VideoDelete, VideoUpdateStatus
-from app.videos.utils.video_utils import MAX_FILE_SIZE, MAX_REQUEST_BODY_SIZE, UPLOAD_DIR, MaxBodySizeException, MaxBodySizeValidator
+from app.videos.utils.video_utils import MAX_FILE_SIZE, MAX_REQUEST_BODY_SIZE, UPLOAD_DIR, MaxBodySizeException, MaxBodySizeValidator, check_for_allowed_types, remove_partial_file
+
+import logging
+import traceback
 
 
 def handle_videos_read(session: Session, user: User):
@@ -63,6 +66,7 @@ async def handle_video_upload(request: Request, user: User, session: Session):
 
     if not filename:
         raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail='Filename header is missing')
+    
     try:
         os.makedirs(UPLOAD_DIR, exist_ok=True)
         filename = unquote(filename)
@@ -72,24 +76,43 @@ async def handle_video_upload(request: Request, user: User, session: Session):
         parser = StreamingFormDataParser(headers=request.headers)
         parser.register('file', file_)
         parser.register('data', data)
+        check = False
 
         async for chunk in request.stream():
             body_validator(chunk)
             parser.data_received(chunk)
+            if not check and file_.multipart_content_type is not None:
+                if await check_for_allowed_types(file_.multipart_content_type) is False:
+                    raise HTTPException(status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, detail=f'File type of {file_.multipart_content_type} is not allowed')
+                check = True
+
     except ClientDisconnect:
+        await remove_partial_file(filepath)
         print("Client Disconnected")
+        
     except MaxBodySizeException as e:
+        await remove_partial_file(filepath)
         raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f'Maximum request body size limit ({MAX_REQUEST_BODY_SIZE} bytes) exceeded ({e.body_len} bytes read)')
-    except streaming_form_data.validators.ValidationError:
-        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f'Maximum file size limit ({MAX_FILE_SIZE} bytes) exceeded')
-    except Exception:
-        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='There was an error uploading the file')
     
-    if not file_.multipart_filename:
-        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail='File is missing')
+    except streaming_form_data.validators.ValidationError:
+        await remove_partial_file(filepath)
+        raise HTTPException(status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, detail=f'Maximum file size limit ({MAX_FILE_SIZE} bytes) exceeded')
+    
+    except HTTPException as http_exc:
+    # Let HTTPExceptions propagate as they are (including your 415 error)
+        await remove_partial_file(filepath)
+        raise http_exc
+
+    except Exception:
+        await remove_partial_file(filepath)
+        raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail='There was an error uploading the file')
     
     print(data.value.decode())
     print(file_.multipart_filename)
+
+    if not file_.multipart_filename:
+        await remove_partial_file(filepath)
+        raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail='File is missing')
 
     extra_data = {"uploaded_by": uploaded_by, "reviewed_by": reviewed_by, "filename": filename, "url": filepath}
     video = Video(**extra_data)
