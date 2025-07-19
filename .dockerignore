@@ -6,3 +6,4 @@ venv/
 .env
 .git
 uploads/
+test_uploads_endpoint.txt

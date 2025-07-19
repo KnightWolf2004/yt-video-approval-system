@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Request
 from sqlmodel import Session
 
 from app.core.session import get_session
@@ -11,12 +11,6 @@ from app.auth.services.auth_services import get_current_active_user
 from app.videos.utils.video_utils import get_extra_fields
 
 router = APIRouter(prefix='/videos', tags=['Video'])
-
-@router.post('/upload', response_model=VideoResponse)
-def upload_video(*, current_user: User = Depends(editor_required), session: Session = Depends(get_session), video: VideoCreate):
-    video_db = handle_video_upload(session=session, video=video, uploader=current_user)
-    extra_field = {"uploader": video_db.uploader.name, "reviewer": video_db.reviewer.name}
-    return VideoResponse.model_validate(video_db, update=extra_field)
 
 @router.get('/my-videos', response_model=list[VideoResponse])
 def read_uploads(*, current_user: User = Depends(get_current_active_user), session: Session = Depends(get_session)):
@@ -33,3 +27,7 @@ def update_status(*, current_user: User = Depends(admin_required), session: Sess
 @router.delete('/delete')
 def delete_video(*, current_user: User = Depends(editor_required), session: Session = Depends(get_session), video: VideoDelete):
     return handle_video_delete(session=session, video=video, user=current_user)
+
+@router.post('/upload')
+async def upload(request: Request, user: User = Depends(editor_required), session: Session = Depends(get_session)):
+    return await handle_video_upload(request, user, session)
