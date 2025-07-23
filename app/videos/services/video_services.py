@@ -1,5 +1,8 @@
+from datetime import datetime, timedelta, timezone
 import os
 from fastapi import HTTPException, Request, status
+from fastapi.responses import StreamingResponse
+import jwt
 from sqlmodel import Session
 import streaming_form_data
 from urllib.parse import unquote
@@ -12,11 +15,8 @@ import streaming_form_data.validators
 from app.users.models.user_enums import Role
 from app.users.models.user_model import User
 from app.videos.models.video_model import Video
-from app.videos.schemas.video_schemas import VideoCreate, VideoDelete, VideoUpdateStatus
-from app.videos.utils.video_utils import MAX_FILE_SIZE, MAX_REQUEST_BODY_SIZE, UPLOAD_DIR, MaxBodySizeException, MaxBodySizeValidator, check_for_allowed_types, remove_partial_file
-
-import logging
-import traceback
+from app.videos.schemas.video_schemas import VideoDelete, VideoUpdateStatus
+from app.videos.utils.video_utils import MAX_FILE_SIZE, MAX_REQUEST_BODY_SIZE, UPLOAD_DIR, MaxBodySizeException, MaxBodySizeValidator, check_for_allowed_types, get_range, iterfile, remove_partial_file
 
 
 def handle_videos_read(session: Session, user: User):
@@ -122,3 +122,44 @@ async def handle_video_upload(request: Request, user: User, session: Session):
     session.commit()
 
     return {"message": f"Successfully uploaded {filename}"}
+
+async def handle_signed_url_generate(video_id: int, user: User, session: Session):
+    video = session.get(Video, video_id)
+    if user.role == Role.Editor:
+        if not video or video.uploaded_by != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video Not Found")
+    else:
+        if not video or video.reviewed_by != user.id:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video Not Found")
+    
+    payload = {
+        "video_id": video_id,
+        "exp": datetime.now(timezone.utc) + timedelta(minutes=10)  # 10 mins expiry
+    }
+    SECRET_KEY = os.getenv("SECRET_KEY")
+    token = jwt.encode(payload, SECRET_KEY, algorithm="HS256")
+
+    url = f"http://localhost:8000/videos/stream-signed?token={token}"
+    return {"stream_url": url}
+
+async def handle_video_stream(video_id: int, request: Request, session: Session):
+    video_db = session.get(Video, video_id)
+    if video_db is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video Not found")
+    video_path = video_db.url
+    if not os.path.exists(video_path):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Video not found")
+    file_size = os.path.getsize(video_path)
+
+    range_header = request.headers.get("range")
+    start, end = await get_range(range_header, file_size)
+    content_length = end - start + 1
+
+    headers = {
+        "Content-Range": f"bytes {start}-{end}/{file_size}",
+        "Accept-Ranges": "bytes",
+        "Content'Length": str(content_length),
+        "Content-Type": "video/mp4",
+    }
+
+    return StreamingResponse(iterfile(video_path, start, end), status_code=status.HTTP_206_PARTIAL_CONTENT, headers=headers)

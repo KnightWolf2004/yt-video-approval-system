@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Video Stream</title>
+</head>
+
+<body>
+    <video id="videoPlayer" width="1200" controls muted>
+        <source id="videoSource" src="" type="video/mp4" />
+    </video>
+
+    <script>
+        const params = new URLSearchParams(window.location.search);
+        const token = params.get("token");
+
+        if (!token) {
+            alert("Missing token");
+        } else {
+            const streamUrl = `http://localhost:8000/videos/stream-signed?token=${token}`;
+            document.getElementById("videoSource").src = streamUrl;
+            document.getElementById("videoPlayer").load();
+        }
+    </script>
+</body>
+
+</html>

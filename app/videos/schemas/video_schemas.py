@@ -26,3 +26,6 @@ class VideoDelete(SQLModel):
 class VideoUpdateStatus(SQLModel):
     id: int
     status: Status
+
+class VideoStream(SQLModel):
+    id: int
