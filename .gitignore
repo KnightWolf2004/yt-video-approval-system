@@ -3,3 +3,5 @@
 __pycache__/
 test_uploads_endpoint.txt
 uploads/
+client_secrets.json
+app/youtube/youtube_script.py-oauth2.json
