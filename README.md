@@ -1,32 +1,35 @@
-## Video Approval System – FastAPI Backend
+## Video Approval & Streaming System – FastAPI Backend
 
-A secure backend system where editors can upload videos and admins can approve or reject them. Built with FastAPI, SQLModel, PostgreSQL, and JWT-based authentication.
+A complete backend platform to manage video uploads, approvals, secure streaming, and YouTube publishing — built from scratch with FastAPI, PostgreSQL, and JWT-based role access.
 
 ##  Features
 
--  JWT Authentication with role-based access (Admin / Editor)
--  Video URL upload
--  Admin review & status updates (Pending / Approved / Rejected)
--  Editors can view their submissions
--  Clean service-layer architecture
--  Swagger/OpenAPI UI for testing
+-  **Role-Based Auth**: Admins and Editors with JWT-secured access
+-  **Editor Uploads**: Upload actual video files (not just links)
+-  **Admin Review Workflow**: Approve or reject submissions
+-  **Editor Dashboard**: View status of all uploads
+-  **Secure Streaming**: Signed URLs + range requests = seeking, buffering, browser-native controls
+-  **YouTube API Integration**: Push videos directly to YouTube channels (authenticated)
+-  **Modular Architecture**: Clean separation via services, routers, and models
+-  **Swagger/OpenAPI UI**: Built-in testing for all endpoints
 
 ## 🧱 Tech Stack
 
-- **FastAPI** – modern Python web framework
-- **SQLModel** – combines pydantic + SQLAlchemy with great developer ergonomics
-- **PostgreSQL** – reliable relational database
-- **JWT** – secure token-based authentication
+- **FastAPI** – async Python backend framework
+- **SQLModel** – ORM built on SQLAlchemy + Pydantic
+- **PostgreSQL** – production-grade relational DB
+- **JWT (PyJWT)** – secure token-based authentication
+- **Google API (YouTube Data API v3)** – for YouTube uploads
 
 ## 📌 Notes
 
--  All endpoints tested via Swagger UI
--  Currently no frontend — designed to be frontend-agnostic
--  Video streaming is not implemented; URLs are assumed to be remote
+-  Built **frontend-agnostic** – can be consumed by any frontend
+-  Signed streaming URLs **expire** for added security
+-  Everything is testable via **Swagger UI**
 
 ## 🎯 Goals
 
-This project was built as a backend-focused portfolio project to:
--  Demonstrate real-world FastAPI usage
--  Showcase authentication, authorization, and database design
--  Build a production-like system with role-based access
+🔥Why This Project Stands Out
+-  Prove competence in **real-world FastAPI systems**
+-  Showcase full-stack backend logic (auth, DB, streaming, external APIs)
+-  Create a portfolio-ready project that's **modular, scalable, and production-aware**
