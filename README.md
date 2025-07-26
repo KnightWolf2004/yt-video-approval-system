@@ -1,4 +1,4 @@
-## Video Approval & Streaming System – FastAPI Backend
+## StreamForge: Secure Video Review & Publishing Backend (FastAPI + PostgreSQL)
 
 A complete backend platform to manage video uploads, approvals, secure streaming, and YouTube publishing — built from scratch with FastAPI, PostgreSQL, and JWT-based role access.
 
